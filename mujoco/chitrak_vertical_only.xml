@@ -1,0 +1,111 @@
+<mujoco model="chitrak_description">
+  <compiler angle="radian"/>
+
+  <option timestep="0.005"/>
+
+  <visual>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.6 0.6 0.6"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.0"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 2" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <light pos="1 1 2" dir="-1 -1 -1" diffuse="0.4 0.4 0.4"/>
+    <geom name="floor" type="plane" size="3 3 0.1" material="groundplane"/>
+
+    <body name="torso_link" pos="0 0 0.17">
+      <joint name="root_z" type="slide" axis="0 0 1"/>
+      <inertial pos="-0.00238869 -0.0000123102 -0.0259411" mass="0.531018"
+        diaginertia="0.000784647 0.000983761 0.00139027"/>
+      <geom size="0.1 0.06 0.025" pos="0 0 -0.025" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+      <geom size="0.035 0.02 0.025" pos="-0.13 0 -0.025" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+      <geom size="0.035 0.02 0.025" pos="0.13 0 -0.025" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+      <body name="fr_hip_link" pos="0.1034 -0.0557689 -0.018465">
+        <inertial pos="0.0322826 -0.000429461 -0.0140006" quat="0.501642 0.496046 0.503748 0.49853" mass="0.108649" diaginertia="4.61686e-05 4.28729e-05 2.69799e-05"/>
+        <joint name="fr_hip_roll_joint" pos="0 0 0" axis="1 0 0" range="-1.57 1.57" actuatorfrcrange="-2.5 2.5"/>
+        <geom size="0.03 0.015 0.0275" pos="0.03 -0.005 -0.014" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+        <body name="fr_thigh_link" pos="0.022055 -0.021 0.00041">
+          <inertial pos="-0.0626115 -0.00685326 5.47714e-08" quat="0.503713 0.503724 0.496248 0.496259" mass="0.0357823" diaginertia="1.62922e-05 1.5657e-05 1.82581e-06"/>
+          <joint name="fr_hip_pitch_joint" pos="0 0 0" axis="0 -1 0" range="0 3.14" actuatorfrcrange="-2.5 2.5"/>
+          <geom size="0.008 0.075" pos="-0.065 -0.007 0" quat="0.707388 0 -0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+          <body name="fr_calf_link" pos="-0.13 5e-05 0">
+            <inertial pos="0.0724501 -0.00768914 -0.0161896" quat="0.181537 0.744111 0.262615 0.586836" mass="0.0489997" diaginertia="3.66748e-05 3.59051e-05 5.09399e-06"/>
+            <joint name="fr_knee_joint" pos="0 0 0" axis="0 -1 0" range="-3.14 0" actuatorfrcrange="-2.5 2.5"/>
+            <geom size="0.008 0.075" pos="0.065 -0.008 -0.02" quat="0.707388 0 0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.013" pos="0.14 -0.009 -0.025" quat="0.707388 0 0.706825 0" rgba="0.752941 0.752941 0.752941 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="fl_hip_link" pos="0.1034 0.0557689 -0.018465">
+        <inertial pos="0.0319882 0.000410061 -0.0140991" quat="0.501243 0.501038 0.49882 0.498893" mass="0.108543" diaginertia="4.61468e-05 4.28245e-05 2.69788e-05"/>
+        <joint name="fl_hip_roll_joint" pos="0 0 0" axis="1 0 0" range="-1.57 1.57" actuatorfrcrange="-2.5 2.5"/>
+        <geom size="0.03 0.015 0.0275" pos="0.03 0.005 -0.014" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+        <body name="fl_thigh_link" pos="0.021575 0.021 0">
+          <inertial pos="-0.062611 0.0068533 -5.4771e-08" quat="0.496248 0.496259 0.503713 0.503724" mass="0.035782" diaginertia="1.62922e-05 1.5657e-05 1.82578e-06"/>
+          <joint name="fl_hip_pitch_joint" pos="0 0 0" axis="0 1 0" range="-3.14 0" actuatorfrcrange="-2.5 2.5"/>
+          <geom size="0.008 0.075" pos="-0.065 0.007 0" quat="0.707388 0 -0.706825 0" type="cylinder" rgba="0.75294 0.75294 0.75294 1"/>
+          <body name="fl_calf_link" pos="-0.13 -5e-05 0">
+            <inertial pos="0.0724809 0.00768626 -0.0162002" quat="-0.181543 0.74392 -0.262765 0.58701" mass="0.0489855" diaginertia="3.66302e-05 3.58563e-05 5.08653e-06"/>
+            <joint name="fl_knee_joint" pos="0 0 0" axis="0 1 0" range="0 3.14" actuatorfrcrange="-2.5 2.5"/>
+            <geom size="0.008 0.075" pos="0.065 0.008 -0.02" quat="0.707388 0 0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.013" pos="0.14 0.009 -0.025" quat="0.707388 0 0.706825 0" rgba="0.752941 0.752941 0.752941 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="br_hip_link" pos="-0.1034 -0.0557689 -0.018465">
+        <inertial pos="-0.0321355 -0.000410061 -0.0139732" quat="0.501038 0.501243 0.498893 0.49882" mass="0.108543" diaginertia="4.61468e-05 4.28245e-05 2.69788e-05"/>
+        <joint name="br_hip_roll_joint" pos="0 0 0" axis="-1 0 0" range="-1.57 1.57" actuatorfrcrange="-2.5 2.5"/>
+        <geom size="0.03 0.015 0.0275" pos="-0.03 -0.005 -0.014" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+        <body name="br_thigh_link" pos="-0.041945 -0.021 0.00041">
+          <inertial pos="-0.0626115 -0.00685326 5.47714e-08" quat="0.503713 0.503724 0.496248 0.496259" mass="0.0357823" diaginertia="1.62922e-05 1.5657e-05 1.82581e-06"/>
+          <joint name="br_hip_pitch_joint" pos="0 0 0" axis="0 -1 0" range="0 3.14" actuatorfrcrange="-2.5 2.5"/>
+          <geom size="0.008 0.075" pos="-0.065 -0.007 0" quat="0.707388 0 0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+          <body name="br_calf_link" pos="-0.13 5e-05 0">
+            <inertial pos="0.0724501 -0.00768914 -0.0161896" quat="0.181537 0.744111 0.262615 0.586836" mass="0.0489997" diaginertia="3.66748e-05 3.59051e-05 5.09399e-06"/>
+            <joint name="br_knee_joint" pos="0 0 0" axis="0 -1 0" range="-3.14 0" actuatorfrcrange="-2.5 2.5"/>
+            <geom size="0.008 0.075" pos="0.065 -0.008 -0.02" quat="0.707388 0 0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.013" pos="0.14 -0.009 -0.025" quat="0.707388 0 0.706825 0" rgba="0.752941 0.752941 0.752941 1"/>
+          </body>
+        </body>
+      </body>
+      <body name="bl_hip_link" pos="-0.1034 0.055769 -0.018465">
+        <inertial pos="-0.0319882 0.000429461 -0.0140006" quat="0.496046 0.501642 0.49853 0.503748" mass="0.108649" diaginertia="4.61686e-05 4.28729e-05 2.69799e-05"/>
+        <joint name="bl_hip_roll_joint" pos="0 0 0" axis="-1 0 0" range="-1.57 1.57" actuatorfrcrange="-2.5 2.5"/>
+        <geom size="0.03 0.015 0.0275" pos="-0.03 0.005 -0.014" type="box" rgba="0.752941 0.752941 0.752941 1"/>
+        <body name="bl_thigh_link" pos="-0.041945 0.021 0.00041">
+          <inertial pos="-0.0626115 0.00685326 -5.47714e-08" quat="0.496248 0.496259 0.503713 0.503724" mass="0.0357823" diaginertia="1.62922e-05 1.5657e-05 1.82581e-06"/>
+          <joint name="bl_hip_pitch_joint" pos="0 0 0" axis="0 1 0" range="-3.14 0" actuatorfrcrange="-2.5 2.5"/>
+          <geom size="0.008 0.075" pos="-0.065 0.007 0" quat="0.707388 0 -0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+          <body name="bl_calf_link" pos="-0.13 -5e-05 0">
+            <inertial pos="0.0724809 0.00768626 -0.0162002" quat="-0.181543 0.74392 -0.262765 0.58701" mass="0.0489855" diaginertia="3.66302e-05 3.58563e-05 5.08653e-06"/>
+            <joint name="bl_knee_joint" pos="0 0 0" axis="0 1 0" range="0 3.14" actuatorfrcrange="-2.5 2.5"/>
+            <geom size="0.008 0.075" pos="0.065 0.008 -0.02" quat="0.707388 0 0.706825 0" type="cylinder" rgba="0.752941 0.752941 0.752941 1"/>
+            <geom size="0.013" pos="0.14 0.009 -0.025" quat="0.707388 0 0.706825 0" rgba="0.752941 0.752941 0.752941 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- matches Isaac Lab's DCMotorCfg: stiffness=10, damping=0.5, effort_limit=saturation_effort=2.5 -->
+    <position name="fr_hip_roll_joint" joint="fr_hip_roll_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-1.57 1.57"/>
+    <position name="fr_hip_pitch_joint" joint="fr_hip_pitch_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="0 3.14"/>
+    <position name="fr_knee_joint" joint="fr_knee_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-3.14 0"/>
+    <position name="fl_hip_roll_joint" joint="fl_hip_roll_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-1.57 1.57"/>
+    <position name="fl_hip_pitch_joint" joint="fl_hip_pitch_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-3.14 0"/>
+    <position name="fl_knee_joint" joint="fl_knee_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="0 3.14"/>
+    <position name="br_hip_roll_joint" joint="br_hip_roll_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-1.57 1.57"/>
+    <position name="br_hip_pitch_joint" joint="br_hip_pitch_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="0 3.14"/>
+    <position name="br_knee_joint" joint="br_knee_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-3.14 0"/>
+    <position name="bl_hip_roll_joint" joint="bl_hip_roll_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-1.57 1.57"/>
+    <position name="bl_hip_pitch_joint" joint="bl_hip_pitch_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="-3.14 0"/>
+    <position name="bl_knee_joint" joint="bl_knee_joint" kp="10" kv="0.5" forcerange="-2.5 2.5" ctrlrange="0 3.14"/>
+  </actuator>
+</mujoco>
