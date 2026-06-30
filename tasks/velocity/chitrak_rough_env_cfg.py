@@ -60,14 +60,15 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # height-maintenance: symmetric L2 kernel around the standing height
         # (chitrak.py's init pose, 0.17m) -- penalizes BOTH sinking below and
         # jumping above the target equally, so there's no incentive to hop;
-        # the only optimum is to sit at the target height. Weight is large
-        # (-300) because Chitrak's height scale is small (~0.17m) relative to
-        # stock Isaac Lab humanoids (~0.7-1.8m) that this reward type is
-        # normally tuned for -- at that scale, the same proportional error
-        # gives a squared-error ~25-100x smaller, so the weight has to scale
-        # up correspondingly to make this term meaningfully comparable to the
-        # other reward terms. Untested starting point; retune after the
-        # first short run if the robot ignores height or overcorrects.
+        # the only optimum is to sit at the target height.
+        # History: weight=-300 settled at h=0.126m with nearly every joint
+        # saturated at the real 2.5 Nm limit. weight=-1000 (same 2.5 Nm
+        # limit) reached h=0.174m via an asymmetric leg strategy. Reverted to
+        # -300 here specifically to pair with a temporary effort_limit bump
+        # to Go1's spec (23.7 Nm, see chitrak.py) -- isolates whether the
+        # original weight=-300 failure was a torque-budget problem (fixed by
+        # more torque) or a reward-strength problem (would need -1000
+        # regardless of torque).
         self.rewards.base_height = RewTerm(
             func=mdp.base_height_l2,
             weight=-300.0,

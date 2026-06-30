@@ -1,20 +1,25 @@
-"""Static holding-torque sanity check (TRAINING_ANALYSIS.md section 4).
+"""RETRACTED -- see ../static_holding_isaaclab.py instead (TRAINING_ANALYSIS.md
+section 4a/4b for the full writeup).
 
 Independent of any RL policy: command the robot to hold a fixed standing pose
-forever (ctrl = pose, i.e. always-zero residual action) using the exact same
-PD gains and torque limit as Isaac Lab's DCMotorCfg (stiffness=10, damping=0.5,
-effort_limit=saturation_effort=2.5 Nm), and see whether gravity alone makes
-the legs buckle.
+forever (ctrl = pose, i.e. always-zero residual action) using PD gains and a
+torque limit nominally matching Isaac Lab's DCMotorCfg (stiffness=10,
+damping=0.5, effort_limit=saturation_effort=2.5 Nm), and see whether gravity
+alone makes the legs buckle.
 
-IMPORTANT: the initial torso height is auto-computed per pose (via bisection)
-to be the exact zero-penetration contact height for that pose's leg geometry.
-Starting at an arbitrary height (e.g. a guessed 0.17 m) causes initial foot/
-ground penetration, which the contact solver resolves with a sharp corrective
-impulse in the first timestep -- that impulse loads ALL joints (including
-hip_roll, which has no business carrying load in a symmetric stance) and
-contaminates the torque reading. Bisecting to zero penetration first removes
-that artifact so the torque trace reflects steady-state gravity holding, not
-an impact transient.
+The zero-penetration bisection below (auto-computing the initial torso height
+per pose, rather than guessing) was a real fix for an initial-impact artifact
+-- but it was NOT sufficient to make this script trustworthy. A follow-up
+check (running with the 2.5 Nm cap removed entirely) found the system never
+settles to a calm state even with unlimited torque -- after 10s of sim time
+it still had nonzero velocity and wildly asymmetric joint torques across a
+mirror-symmetric stance. That's a MuJoCo contact-stiffness/timestep
+instability artifact in this particular reproduction, not real physics.
+Conclusion: this MuJoCo setup is not a faithful enough reproduction of Isaac
+Lab's PhysX contact/actuator behavior to trust quantitatively. Retracted in
+favor of testing directly in Isaac Lab's actual PhysX engine
+(static_holding_isaaclab.py), which removes the cross-simulator fidelity
+question entirely. Kept here for the historical record only.
 """
 import sys
 

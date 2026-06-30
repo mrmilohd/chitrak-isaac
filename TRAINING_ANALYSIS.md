@@ -386,3 +386,48 @@ which is not a likely cause of collapse-and-stay (if anything it should make a s
    reward-neutral — this is what currently lets a moderate sag turn into a permanent collapse.
 3. Retrain a short run (e.g. 300 iterations) and re-check the trajectory log/MuJoCo replay before
    committing to a full 1500-iteration run.
+
+---
+
+## 11. UPDATE — actual training results partially contradict §10's "torque ceiling" framing
+
+§10 concluded the knee's torque margin was the root cause and treated the static-pose tests as
+near-decisive. Steps 1-3 above were then implemented (`undesired_contacts` re-enabled, `base_height_l2`
+added, `rel_standing_envs=1.0` to remove velocity commands — see `chitrak_rough_env_cfg.py`) and two
+500-iteration training runs were done. **The results don't fully support the earlier framing.**
+
+**Run 1 (`base_height` weight=-300):** settled at height≈0.126m (barely better than the passive
+zero-action test's 0.120m), with nearly every joint saturated 95-99.6% of the time. This looked like
+confirmation of the torque-ceiling conclusion — maximal effort, no progress on height.
+
+**Run 2 (`base_height` weight=-1000, otherwise identical):** settled at height≈0.174m — within
+**3mm of the 0.17m target**, and stable (range 0.172-0.175m over the last 100 steps). This is a
+materially different outcome from Run 1, achieved by an **asymmetric leg strategy**: one leg
+(`fl`, front-left) does almost no work (0.2-0.8 Nm across its three joints, far under budget)
+while the other three legs' hip_pitch+knee (and one hip_roll) sit saturated 63-99% of the time.
+Geometrically, the front legs are extended/lifted (knee height ~0.087-0.089m) while the back legs
+stay low (`br` knee at 0.028m, nearly on the ground) — a forward-leaning stretch, not a symmetric
+crouch.
+
+**What this means:** the previous conclusion — "no pose holds 0.17m within the torque budget,
+confirmed across 5 different pose-selection strategies" — was specifically about *static, fixed*
+poses. It did not account for an RL policy discovering a genuinely different, *asymmetric*
+multi-leg strategy that none of the manual pose sweeps tried (every manual sweep in §1-§10 assumed
+roughly symmetric loading across all 4 legs). Run 2 shows that assumption was the gap, not the
+torque limit itself — there was a way to get much closer to target height, it just required
+unevenly distributing load across legs in a way the symmetric pose-sweep methodology never tested.
+
+**Open problem, not yet solved:** Run 2 reaches the height target but does so by redlining 3 of 4
+legs continuously — not a viable real-hardware posture (running motors at ~99% of continuous-rated
+torque indefinitely would overheat them). The current open question is whether a *more even*
+load distribution across all 4 legs can also reach ~0.17m, or whether the height target itself
+forces this kind of lopsided loading. `dof_torques_l2` (currently `-1e-4`, confirmed via the
+printed reward table to be essentially inert relative to `base_height`'s `-1000`) is the next lever
+to test — raising it should, in principle, favor spreading torque evenly across joints for a fixed
+total support force (L2 penalties favor flat distributions over concentrated ones for a fixed sum),
+which may fix the leg asymmetry without sacrificing height. Untested as of this writing.
+
+**Process note:** this is exactly the kind of update that's easy to skip and shouldn't be — §10's
+conclusion was reasonable given the evidence available at the time (5 independent pose-selection
+methods all failed), but new evidence (an actual RL training run, not a hand-designed pose) changed
+the picture. Treat §1-§10 as the documented reasoning trail that led here, not as the final word.

@@ -2,14 +2,25 @@
 where the knee doesn't saturate at its 2.5 Nm limit while holding still. One
 Isaac Sim launch, many resets -- much cheaper than relaunching per pose.
 
-IMPORTANT: poses are parameterized via the SAME 2-link planar IK used by the
-real robot's ik_solver.py (target foot z-depth -> hip_pitch, knee angles),
-not by sweeping hip_pitch/knee independently. An earlier attempt swept the
-two angles independently and got a nonsensical result (height DECREASING as
-knee bend decreased) -- that's because hip_pitch and knee are coupled; moving
-one without the other doesn't trace a real "leg extension" path. Using the
-actual IK formula ties them together correctly, exactly mirroring how the
-real hardware's gait stack derives joint angles from a desired foot position.
+NOTE on methodology history (kept for context, not currently used by the
+script below): two earlier parameterizations were tried and abandoned before
+landing on direct forward-kinematics (FK) measurement:
+  1. Sweeping hip_pitch/knee independently -- gave a nonsensical result
+     (height DECREASING as knee bend decreased), because the two angles are
+     kinematically coupled; moving one without the other doesn't trace a
+     real "leg extension" path.
+  2. Re-using the real robot's ik_solver.py formula (target foot z-depth ->
+     hip_pitch, knee angles) -- has a degenerate singularity near the hip
+     (small |foot_z| folds the leg back on itself rather than truly
+     straightening it), which produced misleading results too.
+Both were replaced by directly querying body positions via FK
+(chitrak_isaac/mujoco/chitrak_floating.xml) for each candidate (hip_pitch,
+knee) pair, which is robust to this URDF's non-obvious joint-zero convention
+(confirmed separately: knee=0 is NOT a straight leg in this model). The
+FOOT_UNDER_HIP_CANDIDATES list below was generated that way -- see
+TRAINING_ANALYSIS.md and conversation history for the FK sweep that produced
+these specific (hip_pitch, knee) pairs (near-maximum leg extension with the
+foot close to directly under the hip).
 
 Action formula (JointPositionActionCfg, use_default_offset=True):
     target = scale * action + default_joint_pos
@@ -18,7 +29,6 @@ so to command an arbitrary target pose without touching chitrak.py, we solve
 and step with that constant action long enough to settle.
 """
 import argparse
-import math
 import os
 import sys
 

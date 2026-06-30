@@ -4,7 +4,19 @@ from isaaclab.assets.articulation import ArticulationCfg
 
 CHITRAK_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path="/teamspace/studios/this_studio/chitrak/chitrak_description/usd/chitrak.usd",
+        # IMPORTANT: usd_merged/, not usd/. The original usd/chitrak.usd was converted with
+        # merge_fixed_joints=False, which left the URDF's empty `<link name="base_link"/>`
+        # (no inertial, meant to be a massless reference frame -- all real mass is on the
+        # fixed-jointed torso_link) as a SEPARATE rigid body. PhysX can't have a body with
+        # undefined mass, so it silently defaulted base_link to 1.0 kg -- a phantom ~77% mass
+        # overestimate (2.3045 kg simulated vs. the real 1.3045 kg design) that was present in
+        # every test and training run before this was caught. Re-converted with
+        # `--merge-joints` (merge_fixed_joints=True), which merges torso_link's mass/inertia
+        # into base_link (keeping the root's name) instead of creating a separate body for it --
+        # verified via direct `root_physx_view.get_masses()` query to total exactly 1.3045 kg,
+        # matching the URDF's per-link masses summed directly. See CLAUDE.md and
+        # chitrak_isaac/VALIDATION_REPORT.md for the full investigation.
+        usd_path="/teamspace/studios/this_studio/chitrak/chitrak_description/usd/chitrak.usd",  # TEMP revert for playback compat, see below
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -40,8 +52,9 @@ CHITRAK_CFG = ArticulationCfg(
     actuators={
         "legs": DCMotorCfg(
             joint_names_expr=[".*_hip_roll_joint", ".*_hip_pitch_joint", ".*_knee_joint"],
-            effort_limit=2.5,
-            saturation_effort=2.5,
+            # TEMP revert for playback compat -- model_1498.pt was trained under 23.7 Nm + old USD
+            effort_limit=23.7,
+            saturation_effort=23.7,
             velocity_limit=8.0,
             stiffness={".*": 10.0},
             damping={".*": 0.5},

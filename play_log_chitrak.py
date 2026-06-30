@@ -85,6 +85,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     joint_pos_log = []
     root_pos_log = []
     root_quat_log = []
+    torque_log = []
 
     obs = env.get_observations()
     for step in range(args_cli.num_steps):
@@ -97,6 +98,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
         joint_pos_log.append(robot.data.joint_pos[0].cpu().numpy().copy())
         root_pos_log.append(robot.data.root_pos_w[0].cpu().numpy().copy())
         root_quat_log.append(robot.data.root_quat_w[0].cpu().numpy().copy())
+        torque_log.append(robot.data.applied_torque[0].cpu().numpy().copy())
+
+    torque_arr = np.array(torque_log)
+    print(f"\n[INFO]: Torque stats over {len(torque_log)} steps (post-saturation, real applied torque):")
+    for j, name in enumerate(joint_names):
+        peak = np.max(np.abs(torque_arr[:, j]))
+        mean = np.mean(np.abs(torque_arr[:, j]))
+        frac_saturated = np.mean(np.abs(torque_arr[:, j]) >= 2.45)
+        flag = "  <-- frequently saturated" if frac_saturated > 0.1 else ""
+        print(f"  {name:22s} peak={peak:6.3f} Nm  mean={mean:6.3f} Nm  "
+              f"%time>=2.45Nm={frac_saturated*100:5.1f}%{flag}")
 
     np.savez(
         args_cli.out,
@@ -104,6 +116,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
         joint_pos=np.array(joint_pos_log),
         root_pos=np.array(root_pos_log),
         root_quat=np.array(root_quat_log),
+        torque=torque_arr,
         dt=env.unwrapped.step_dt,
     )
     print(f"[INFO]: Saved {len(joint_pos_log)} steps to {args_cli.out}")

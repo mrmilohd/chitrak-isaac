@@ -1,8 +1,19 @@
-"""Render the 'theoretical best case' standing pose -- straight leg, foot
+"""SUPERSEDED -- see best_case_pose_v2_isaaclab.py instead.
+
+Renders the 'theoretical best case' standing pose -- straight leg, foot
 under hip, ~97% of max leg extension (hip_pitch=1.4, knee=2.8) -- found by
-the FK sweep to be the most torque-favorable configuration possible. Logs
-the full trajectory for MuJoCo rendering, same pipeline as
-static_holding_isaaclab.py / play_log_chitrak.py."""
+the FK sweep to be the most torque-favorable configuration possible.
+
+KNOWN FLAW: the robot spawns at chitrak.py's actual init pose (hip_pitch=0.5,
+knee=1.0, z=0.17) and is then immediately commanded to snap to the very
+different target pose used here on the first step. The resulting chaotic
+bouncing seen in this script's output is confounded by that snap transient
+-- it's not a clean test of "can 2.5 Nm hold this pose," it also includes
+"can it survive an instantaneous large joint-angle jump." best_case_pose_v2
+_isaaclab.py fixes this by overriding init_state so the robot spawns
+directly in the target pose (init == commanded, zero snap), which is the
+trustworthy version of this test. Kept here for the historical record of
+why that fix was needed, not as a script to draw conclusions from."""
 import argparse
 import os
 import sys
