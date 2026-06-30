@@ -16,7 +16,7 @@ CHITRAK_CFG = ArticulationCfg(
         # verified via direct `root_physx_view.get_masses()` query to total exactly 1.3045 kg,
         # matching the URDF's per-link masses summed directly. See CLAUDE.md and
         # chitrak_isaac/VALIDATION_REPORT.md for the full investigation.
-        usd_path="/teamspace/studios/this_studio/chitrak/chitrak_description/usd/chitrak.usd",  # TEMP revert for playback compat, see below
+        usd_path="/teamspace/studios/this_studio/chitrak/chitrak_description/usd_merged/chitrak.usd",
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -52,9 +52,11 @@ CHITRAK_CFG = ArticulationCfg(
     actuators={
         "legs": DCMotorCfg(
             joint_names_expr=[".*_hip_roll_joint", ".*_hip_pitch_joint", ".*_knee_joint"],
-            # TEMP revert for playback compat -- model_1498.pt was trained under 23.7 Nm + old USD
-            effort_limit=23.7,
-            saturation_effort=23.7,
+            # Real Chitrak motor spec. (Was temporarily bumped to Go1's 23.7 Nm for a diagnostic
+            # test -- reverted now that the real bottleneck, a phantom 1.0 kg mass on base_link
+            # from the USD conversion, is fixed. See usd_path comment above.)
+            effort_limit=2.5,
+            saturation_effort=2.5,
             velocity_limit=8.0,
             stiffness={".*": 10.0},
             damping={".*": 0.5},

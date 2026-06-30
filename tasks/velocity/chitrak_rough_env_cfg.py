@@ -14,7 +14,11 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # robot
         self.scene.robot = CHITRAK_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/torso_link"
+        # NOTE: "base_link", not "torso_link" -- usd_merged/chitrak.usd (see chitrak.py) was
+        # converted with merge_fixed_joints=True, which merged torso_link's body into base_link
+        # (keeping the root's name). torso_link no longer exists as a separate body in this USD.
+        # All body_names references below were updated to match.
+        self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/base_link"
 
         # action scale — same as Go1
         self.actions.joint_pos.scale = 0.25
@@ -28,8 +32,8 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # events
         self.events.push_robot = None
         self.events.base_com = None
-        self.events.add_base_mass.params["asset_cfg"].body_names = "torso_link"
-        self.events.base_external_force_torque.params["asset_cfg"].body_names = "torso_link"
+        self.events.add_base_mass.params["asset_cfg"].body_names = "base_link"
+        self.events.base_external_force_torque.params["asset_cfg"].body_names = "base_link"
         self.events.reset_robot_joints.params["position_range"] = (1.0, 1.0)
         self.events.reset_base.params = {
             "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
@@ -76,4 +80,4 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         )
 
         # terminations
-        self.terminations.base_contact.params["sensor_cfg"].body_names = "torso_link"
+        self.terminations.base_contact.params["sensor_cfg"].body_names = "base_link"

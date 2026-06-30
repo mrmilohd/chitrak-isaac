@@ -70,6 +70,17 @@ for step in range(args_cli.num_steps):
     if step % 20 == 0:
         print(f"step {step:4d}  z={z_log[-1]:.4f}  "
               f"torque={np.round(torque_log[-1], 3)}")
+    if step >= args_cli.num_steps - 10:
+        # RE-CHECK of the pos-frozen-but-vel-nonzero anomaly seen on the OLD
+        # (unmerged base_link+torso_link) USD -- testing whether the merge
+        # fix (single rigid body instead of a mass-mismatched fixed-joint
+        # constraint between two bodies) also fixed this.
+        kpos = robot.data.joint_pos[0, 10].item()
+        kvel = robot.data.joint_vel[0, 10].item()
+        hpos = robot.data.joint_pos[0, 2].item()
+        hvel = robot.data.joint_vel[0, 2].item()
+        print(f"  [fine] step {step:4d}  joint10 pos={kpos:.6f} vel={kvel:.6f}  |  "
+              f"joint2 pos={hpos:.6f} vel={hvel:.6f}")
 
 z_log = np.array(z_log)
 torque_log = np.array(torque_log)
