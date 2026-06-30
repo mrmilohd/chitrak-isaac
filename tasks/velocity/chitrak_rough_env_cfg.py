@@ -20,8 +20,16 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # All body_names references below were updated to match.
         self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/base_link"
 
-        # action scale — same as Go1
-        self.actions.joint_pos.scale = 0.25
+        # action scale: 0.25 (same as Go1) gave the policy ~10x more action
+        # authority than standing actually needs -- stiffness=10 * scale=0.25
+        # = 2.5 Nm P-term per unit action, i.e. one full action saturates the
+        # motor exactly, even though static standing in this pose only needs
+        # ~0.1-0.3 Nm/joint. Exploration noise was spending that excess
+        # authority tipping the (now correctly light, 1.3kg) base and
+        # saturating joints rather than making fine adjustments. Reduced to
+        # 0.125 -> max P-term 1.25 Nm, half the ceiling, real headroom left
+        # for actual standing-correction torque.
+        self.actions.joint_pos.scale = 0.125
 
         # task: stand upright only, no locomotion. Force every env's velocity
         # command to zero (rather than removing the tracking reward terms) —
@@ -49,7 +57,11 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # rewards
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = ".*_calf_link"
-        self.rewards.feet_air_time.weight = 0.01
+        # feet_air_time is a GAIT term -- it pays out for lifting a foot and
+        # landing after a target air time. On a stand-upright-only task this
+        # directly rewards stepping/lifting feet, which is actively wrong:
+        # on a 1.3kg base, one foot-lift is enough to tip it. Disabled.
+        self.rewards.feet_air_time.weight = 0.0
         # anti-collapse signal: penalize thigh-on-ground contact (the leg has
         # buckled). Previously disabled (copied verbatim from Go1's template,
         # where it's fine since Go1 doesn't tend to collapse) -- re-enabled
@@ -65,14 +77,17 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # (chitrak.py's init pose, 0.17m) -- penalizes BOTH sinking below and
         # jumping above the target equally, so there's no incentive to hop;
         # the only optimum is to sit at the target height.
-        # History: weight=-300 settled at h=0.126m with nearly every joint
-        # saturated at the real 2.5 Nm limit. weight=-1000 (same 2.5 Nm
-        # limit) reached h=0.174m via an asymmetric leg strategy. Reverted to
-        # -300 here specifically to pair with a temporary effort_limit bump
-        # to Go1's spec (23.7 Nm, see chitrak.py) -- isolates whether the
-        # original weight=-300 failure was a torque-budget problem (fixed by
-        # more torque) or a reward-strength problem (would need -1000
-        # regardless of torque).
+        # History: weight=-300 (correct 1.3045kg mass, 2.5Nm effort_limit)
+        # collapsed by iteration ~100 to a ~19-step instant-fall, then slowly
+        # climbed back to ~67/1000 steps survival by iteration 500, still
+        # improving -- diagnosed as a reward-landscape "suicide trap"
+        # (no is_alive/terminal penalty term, so a near-fall state nets out
+        # more negative if the policy keeps trying than if it lets itself
+        # fall) compounded by 10x more action authority than standing needs
+        # (see action_scale comment above). Keeping weight=-300 unchanged
+        # while testing the action_scale + feet_air_time fix first, per the
+        # Opus-reviewed fix ordering -- this isolates whether those two
+        # changes alone resolve the collapse before touching reward weights.
         self.rewards.base_height = RewTerm(
             func=mdp.base_height_l2,
             weight=-300.0,

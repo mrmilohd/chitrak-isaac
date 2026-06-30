@@ -24,7 +24,9 @@ class ChitrakFlatEnvCfg(ChitrakRoughEnvCfg):
 
         # flat terrain reward overrides
         self.rewards.flat_orientation_l2.weight = -5.0
-        self.rewards.feet_air_time.weight = 0.25
+        # feet_air_time disabled at the rough-cfg level (gait term, wrong for
+        # standing-only) -- do NOT re-enable it here with the old flat-terrain
+        # value of 0.25, which was actively rewarding foot-lifts/tipping.
 
 
 @configclass
