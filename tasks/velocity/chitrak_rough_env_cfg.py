@@ -1,9 +1,11 @@
 from isaaclab.managers import RewardTermCfg as RewTerm
+from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 from isaaclab_tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg
 
+import chitrak_isaac.tasks.velocity.mdp as chitrak_mdp
 from chitrak_isaac.robots.chitrak import CHITRAK_CFG
 
 
@@ -69,6 +71,26 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # collapsed crouch was reward-neutral and never terminated the
         # episode (see TRAINING_ANALYSIS.md section 5).
         self.rewards.undesired_contacts.params["sensor_cfg"].body_names = ".*_thigh_link"
+        # EXPERIMENTAL, uncommitted: knee-near-ground penalty. Originally
+        # tried adding .*_calf_link to undesired_contacts (a body-level
+        # contact-FORCE sensor) for the same purpose, but that can't work:
+        # the calf body's foot-tip needs real ground-contact force just to
+        # support weight during normal standing, so a force threshold can't
+        # distinguish "foot bearing normal load" from "knee/shin dragging" --
+        # both are contact on the same rigid body. Replaced with a geometric
+        # HEIGHT check instead (chitrak_isaac/tasks/velocity/mdp/rewards.py:
+        # knee_near_ground): counts how many calf_link bodies (whose own
+        # origin = the knee joint's pivot point) are below 0.05m. Threshold
+        # derived from an FK sweep (chitrak_floating.xml) over 865 realistic
+        # standing/gait configs: knee height above ground never goes below
+        # ~0.071m in any plausible gait, while the actual observed collapsed
+        # legs (one leg idle/dragging after fix #1) measured 0.0235-0.0382m.
+        # 0.05m sits in that ~3cm gap with margin both ways.
+        self.rewards.knee_near_ground = RewTerm(
+            func=chitrak_mdp.knee_near_ground,
+            weight=-1.0,  # same scale as undesired_contacts, for consistency
+            params={"threshold": 0.05, "asset_cfg": SceneEntityCfg("robot", body_names=".*_calf_link")},
+        )
         self.rewards.dof_torques_l2.weight = -1.0e-4
         self.rewards.track_lin_vel_xy_exp.weight = 1.5
         self.rewards.track_ang_vel_z_exp.weight = 0.75
