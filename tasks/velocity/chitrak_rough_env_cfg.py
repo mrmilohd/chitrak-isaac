@@ -91,6 +91,29 @@ class ChitrakRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
             weight=-1.0,  # same scale as undesired_contacts, for consistency
             params={"threshold": 0.05, "asset_cfg": SceneEntityCfg("robot", body_names=".*_calf_link")},
         )
+        # anti-splay: penalize hip_roll deviating from its default (0.0).
+        # hip_roll is the ONLY leg DOF that swings a leg sideways out of the
+        # vertical fore-aft plane -- hip_pitch/knee only move the leg within
+        # whatever plane hip_roll currently sets. Trained poses so far show
+        # wildly different hip_roll per leg (e.g. 0.75/0.54/0.06/-0.15 rad in
+        # one run) -- legs splayed at inconsistent angles instead of hanging
+        # under the body. Stock isaaclab.envs.mdp.joint_deviation_l1 (sum of
+        # |joint_pos - default_joint_pos|) targeted at just the hip_roll
+        # joints does exactly this.
+        # Weight kept modest (-0.5, well under base_height's -300 and
+        # knee_near_ground's -1.0-per-leg scale) deliberately: hip_roll is
+        # NOT purely vestigial -- real quadruped gaits use it for lateral
+        # velocity tracking, balance corrections, and terrain adaptation.
+        # This should discourage gratuitous splay without hard-blocking
+        # useful hip_roll usage once velocity/turning commands are
+        # reintroduced. REVISIT this weight when walking/turning training
+        # starts -- check whether the policy can still use hip_roll
+        # effectively for turning despite this penalty.
+        self.rewards.hip_roll_deviation = RewTerm(
+            func=mdp.joint_deviation_l1,
+            weight=-0.5,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*_hip_roll_joint")},
+        )
         self.rewards.dof_torques_l2.weight = -1.0e-4
         self.rewards.track_lin_vel_xy_exp.weight = 1.5
         self.rewards.track_ang_vel_z_exp.weight = 0.75
